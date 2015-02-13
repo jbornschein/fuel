@@ -161,3 +161,39 @@ def read_mnist_labels(filename):
             raise ValueError("Wrong magic number reading MNIST label file")
         array = numpy.fromfile(f, dtype='uint8')
     return array
+
+
+@InMemoryDataset.lazy_properties('features')
+class BinarizedMNIST(InMemoryDataset):
+    provides_sources = ('features',)
+
+    def __init__(self, which_set, start=None, stop=None, **kwargs):
+        if which_set not in ('train', 'valid', 'test'):
+           raise ValueError("BinarizedMNIST has a train, valid and test set")
+        if stop is None:
+            stop = 50000 if which_set == "train" else 10000
+        if start is None:
+            start = 0
+        self.num_examples = stop - start
+        self.default_scheme = SequentialScheme(self.num_examples, 1)
+
+        super(BinarizedMNIST, self).__init__(**kwargs)
+
+        self.which_set = which_set
+        self.start = start
+        self.stop = stop
+    
+    def load(self):
+        assert self.which_set in ('train', 'valid', 'test')
+
+        fname = "binarized_mnist_{0}.npy".format(self.which_set)
+        data_path = os.path.join(config.data_path, 'binarized_mnist', fname)
+        
+        features = numpy.load(data_path).astype('float32')
+        self.features = features[self.start:self.stop]
+
+    def get_data(self, state=None, request=None):
+        if state is not None:
+            raise ValueError("MNIST does not have a state")
+        return self.filter_sources((self.features[request],))
+
