@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
 
-from fuel import config
 from fuel.datasets import H5PYDataset
+from fuel.utils import find_in_data_path
 
 
 class CalTech101Silhouettes(H5PYDataset):
@@ -33,10 +32,8 @@ class CalTech101Silhouettes(H5PYDataset):
             raise ValueError('size must be 16 or 28')
 
         self.filename = 'caltech101_silhouettes{}.hdf5'.format(size)
-        super(CalTech101Silhouettes, self).__init__(
-            self.data_path, which_sets=which_sets,
-            load_in_memory=load_in_memory, **kwargs)
 
-    @property
-    def data_path(self):
-        return os.path.join(config.data_path, self.filename)
+        super(CalTech101Silhouettes, self).__init__(
+            find_in_data_path(self.filename),
+            which_sets=which_sets,
+            load_in_memory=load_in_memory, **kwargs)
